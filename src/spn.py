@@ -29,19 +29,22 @@ for i in range(16):
 # Apply sbox (1) to a 16 bit state and return the result
 
 def apply_sbox(state, sbox):
+    result = 0
     # applying the s box on each nibble of state
     for i in range(64 // 4):
-        nibbles = [state >> (4 * i) & 0xF]
+        nibbles = (state >> (4 * i)) & 0xF
+        # apply sbox
+        sboxed = sbox[nibbles]
         # replace each nibble val with s-box output
-        result = [sbox[n] for n in nibbles]
+        result |= sboxed << (4 * i)
         # put trasnformed nibbles back to bit position
-        return sum([result[i] << (4 * i) for i in range (4)])
+    
+    return result
 
 
 # p box
-pbox = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 
-        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 
-        49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63}
+# values 0 - 64
+pbox = list(range(64))
 
 
 def apply_pbox(state, pbox):
@@ -83,9 +86,10 @@ def generate_round_keys(mainKey, num_rounds):
 
 # encryption routine (😅😅😅✌️✌️)
 plaintext = random.getrandbits(64)
-roundkeys = generate_round_keys(mainKeyGen, 31)
+main_key = mainKeyGen()
+roundkeys = generate_round_keys(int(main_key, 16), 31)
 
-def encrypt (pla_text, s_box, p_box, round_keys):
+def encrypt (pla_text, sbox, p_box, round_keys):
     state = pla_text;   # starting block
 
     # 30 rounds
@@ -95,7 +99,7 @@ def encrypt (pla_text, s_box, p_box, round_keys):
         # susbstitution
         state = apply_sbox(state, sbox)
         # permute
-        state = apply_sbox(state)
+        state = apply_pbox(state, p_box)
 
     # final round
     # sbox, then final key

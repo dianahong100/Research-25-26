@@ -44,7 +44,22 @@ def apply_sbox(state, sbox):
 
 # p box
 # values 0 - 64
-pbox = list(range(64))
+pbox = [0, 1, 2, 3,
+        4, 5, 6, 7,
+        8, 9, 10, 11,
+        12, 13, 14, 15,
+        16, 17, 18, 19,
+        20, 21, 22, 23,
+        24, 25, 26, 27,
+        28, 29, 30, 31,
+        32, 33, 34, 35,
+        36, 37, 38, 39,
+        40, 41, 42, 43,
+        44, 45, 46, 47,
+        48, 49, 50, 51,
+        52, 53, 54, 55,
+        56, 57, 58, 59,
+        60, 61, 62, 63]
 
 
 def apply_pbox(state, pbox):
@@ -57,8 +72,8 @@ def apply_pbox(state, pbox):
 
 # main key generation
 def mainKeyGen ():
-    # generate 128 random bits to simulate a random key
-    key = random.getrandbits(128)
+    # generate 64 random bits to simulate a random key
+    key = random.getrandbits(64)
     # bit mix to add diffusion manually
     for i in range(3):
         key ^= (key << 13) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -75,7 +90,7 @@ def generate_round_keys(mainKey, num_rounds):
     key = mainKey
     for i in range(num_rounds):
         # extract 16 bit round key
-        round_key = key & 0xFFFF    # keeps only lowest 16 bits
+        round_key = key & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF    # keeps only lowest 16 bits
         round_keys.append(round_key)    # adds round keys to round_keys
 
         # key rotation: left 4 bits next round
@@ -90,25 +105,19 @@ main_key = mainKeyGen()
 roundkeys = generate_round_keys(int(main_key, 16), 31)
 
 def encrypt (pla_text, sbox, p_box, round_keys):
-    state = pla_text;   # starting block
+    state = pla_text   # starting block
 
-    # 30 rounds
-    for r in range(31 - 1):
+    # 31 rounds
+    for r in range(31):
         # add (mix) round key
         state ^= round_keys[r]
         # susbstitution
         state = apply_sbox(state, sbox)
         # permute
-        state = apply_pbox(state, p_box)
-
-    # final round
-    # sbox, then final key
-    state ^= round_keys[-2]
-    state = apply_sbox(state, sbox)
-    state ^= round_keys[-1]
+        if r != 30: # do for all but one (final round)
+            state = apply_pbox(state, p_box)
 
     return state    # cipher text
 
 # REMINDER: MAKE DECRYPTION
 # MUST MAKE DECRYPTION
-
